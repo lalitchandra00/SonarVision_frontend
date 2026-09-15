@@ -12,6 +12,9 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import UploadMission from './pages/UploadMission';
+import VideoUpload from './pages/VideoUpload';
+import LogUpload from './pages/LogUpload';
+import RealtimePredict from './pages/RealtimePredict';
 import AnalysisResults from './pages/AnalysisResults';
 import MissionHistory from './pages/MissionHistory';
 import MapView from './pages/MapView';
@@ -23,7 +26,7 @@ import NotFound from './pages/NotFound';
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
@@ -33,6 +36,9 @@ function App() {
           <Route element={<ProtectedRoute allowedRoles={['researcher', 'admin']}><DashboardLayout /></ProtectedRoute>}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/upload" element={<UploadMission />} />
+            <Route path="/upload/video" element={<VideoUpload />} />
+            <Route path="/upload/log" element={<LogUpload />} />
+            <Route path="/realtime" element={<RealtimePredict />} />
             <Route path="/analysis/:missionId" element={<AnalysisResults />} />
             <Route path="/missions" element={<MissionHistory />} />
             <Route path="/map" element={<MapView />} />

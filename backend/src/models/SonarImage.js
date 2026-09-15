@@ -10,6 +10,9 @@ const sonarImageSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  annotatedImageUrl: {
+    type: String
+  },
   cloudinaryId: {
     type: String
   },

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-const DetectionOverlay = ({ imageUrl, detections = [], showBoxes = true, showConfidence = true, showHazard = true }) => {
+const DetectionOverlay = ({ imageUrl, detections = [], showBoxes = true, showConfidence = true, showHazard = true, imageWidth = 1024, imageHeight = 768 }) => {
   const [hoveredId, setHoveredId] = useState(null);
 
   return (
@@ -20,11 +20,11 @@ const DetectionOverlay = ({ imageUrl, detections = [], showBoxes = true, showCon
       }} />
 
       {/* Bounding boxes */}
-      {showBoxes && detections.map((det) => {
-        const left = (det.boundingBox?.x / 1024) * 100;
-        const top = (det.boundingBox?.y / 768) * 100;
-        const width = (det.boundingBox?.width / 1024) * 100;
-        const height = (det.boundingBox?.height / 768) * 100;
+      {showBoxes && detections.map((det, idx) => {
+        const left = (det.boundingBox?.x / imageWidth) * 100;
+        const top = (det.boundingBox?.y / imageHeight) * 100;
+        const width = (det.boundingBox?.width / imageWidth) * 100;
+        const height = (det.boundingBox?.height / imageHeight) * 100;
         
         const hazardColor = 
           det.hazardLevel === 'CRITICAL' ? 'border-red-500 bg-red-500/10' :
@@ -36,7 +36,7 @@ const DetectionOverlay = ({ imageUrl, detections = [], showBoxes = true, showCon
 
         return (
           <div
-            key={det._id}
+            key={det._id ?? idx}
             className={`absolute border-2 transition-all cursor-pointer ${hazardColor} ${isHovered ? 'z-20 scale-[1.02] shadow-[0_0_20px_rgba(34,211,238,0.4)]' : 'z-10'}`}
             style={{ left: `${left}%`, top: `${top}%`, width: `${width}%`, height: `${height}%` }}
             onMouseEnter={() => setHoveredId(det._id)}

@@ -9,6 +9,9 @@ import authRoutes from './routes/auth.routes.js';
 import missionRoutes from './routes/mission.routes.js';
 import uploadRoutes from './routes/upload.routes.js';
 import analysisRoutes from './routes/analysis.routes.js';
+import videoRoutes from './routes/video.routes.js';
+import logRoutes from './routes/log.routes.js';
+import realtimeRoutes from './routes/realtime.routes.js';
 import detectionRoutes from './routes/detection.routes.js';
 import analyticsRoutes from './routes/analytics.routes.js';
 import reportRoutes from './routes/report.routes.js';
@@ -65,6 +68,9 @@ app.get('/', (req, res) => {
       '/api/missions',
       '/api/upload',
       '/api/analysis',
+      '/api/video',
+      '/api/logs',
+      '/api/realtime',
       '/api/detections',
       '/api/analytics',
       '/api/reports'
@@ -86,6 +92,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/missions', missionRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/analysis', analysisRoutes);
+app.use('/api/video', videoRoutes);
+app.use('/api/logs', logRoutes);
+app.use('/api/realtime', realtimeRoutes);
 app.use('/api/detections', detectionRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/reports', reportRoutes);

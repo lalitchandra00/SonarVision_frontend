@@ -65,6 +65,19 @@ export const startAnalysis = asyncHandler(async (req, res) => {
       detectionDocs.push(doc);
     }
 
+    // Persist annotated (boxed) image URL + model-reported dimensions back to each SonarImage
+    for (const ann of result.annotatedImages || []) {
+      if (!ann.imageId) continue;
+      const update = { annotatedImageUrl: ann.annotatedImageUrl };
+      if (ann.width) update.width = ann.width;
+      if (ann.height) update.height = ann.height;
+      try {
+        await SonarImage.updateOne({ _id: ann.imageId }, { $set: update });
+      } catch (err) {
+        console.error(`Failed to attach annotated image for ${ann.imageId}:`, err.message);
+      }
+    }
+
     // Update mission stats
     mission.status = 'completed';
     mission.totalDetections = result.totalAnomalies;

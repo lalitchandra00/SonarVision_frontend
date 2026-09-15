@@ -11,7 +11,9 @@ const BASE_RISK = {
   'Unknown Debris': 40,
   'Rock': 5,
   'Sand Ripple': 0,
-  'Natural Ridge': 0
+  'Natural Ridge': 0,
+  'Plane': 75,
+  'Human': 85
 };
 
 const getConfidenceBonus = (confidence) => {
@@ -79,6 +81,8 @@ export const getAIInterpretation = (objectType, confidence, hazardScore, width, 
     'Shipwreck': `Large structured acoustic target with complex geometry and extensive shadow. Consistent with shipwreck debris field. High sonar reflectivity suggests metallic structure. May pose navigation hazard and entanglement risk. Estimated extent ${width.toFixed(1)}m x ${length.toFixed(1)}m. Confidence ${(confidence*100).toFixed(1)}%.`,
     'Unknown Debris': `Unclassified artificial anomaly detected. Irregular but clearly non-natural acoustic signature with geometric edges not consistent with geological features. Requires ROV verification. Size ${width.toFixed(1)}m x ${length.toFixed(1)}m. Confidence ${(confidence*100).toFixed(1)}%.`,
     'Rock': `Natural geological feature identified. Irregular acoustic return consistent with rock formation or boulder. Low hazard, natural seabed feature.`,
+    'Plane': `Confident detection of a submerged aircraft target. Complex metallic structure with strong acoustic shadow consistent with an airplane airframe. High-priority anomaly requiring identification of registry and incident context. Estimated extent ${width.toFixed(1)}m x ${length.toFixed(1)}m. Confidence ${(confidence*100).toFixed(1)}%.`,
+    'Human': `Potential human-related target detected in sonar return. Suspected person in water or submerged human artifact. Requires immediate verification and search-and-rescue coordination. Confidence ${(confidence*100).toFixed(1)}%.`,
   };
   return interpretations[objectType] || interpretations['Unknown Debris'];
 };
@@ -87,6 +91,8 @@ export const getRecommendation = (objectType, hazardLevel, hazardScore) => {
   if (hazardLevel === 'CRITICAL') {
     if (objectType === 'Ghost Net') return 'Immediate Investigation: Deploy ROV/AUV for visual confirmation and coordinate removal operation. Notify marine conservation authority. High entanglement risk.';
     if (objectType === 'Shipwreck') return 'Immediate Investigation: Mark as navigation hazard, notify hydrographic office. Deploy inspection vehicle for structural assessment.';
+    if (objectType === 'Human') return 'Immediate Investigation: Possible person in water. Alert search-and-rescue and verify with ROV/diver deployment without delay.';
+    if (objectType === 'Plane') return 'Immediate Investigation: Submerged aircraft target. Notify maritime authority and aviation incident response teams for confirmation.';
     return 'Immediate Investigation: Deploy underwater inspection vehicle for confirmation and removal assessment. Priority 1.';
   }
   if (hazardLevel === 'HIGH') {

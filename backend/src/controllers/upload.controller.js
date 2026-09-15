@@ -1,3 +1,4 @@
+import fs from 'fs';
 import cloudinary from '../config/cloudinary.js';
 import Mission from '../models/Mission.js';
 import SonarImage from '../models/SonarImage.js';
@@ -5,7 +6,10 @@ import ApiError from '../utils/ApiError.js';
 import ApiResponse from '../utils/ApiResponse.js';
 import asyncHandler from '../utils/asyncHandler.js';
 
-const uploadToCloudinary = (fileBuffer, originalName) => {
+// Streams a temp file to Cloudinary so the whole file never lives in RAM.
+// Stream errors are wired to reject() so failure is handled (and logged) by
+// the controller instead of crashing the process as an unhandled rejection.
+const uploadToCloudinary = (filePath, originalName) => {
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
       {
@@ -18,8 +22,19 @@ const uploadToCloudinary = (fileBuffer, originalName) => {
         else resolve(result);
       }
     );
-    uploadStream.end(fileBuffer);
+    uploadStream.on('error', (err) => reject(err));
+    fs.createReadStream(filePath)
+      .on('error', (err) => reject(err))
+      .pipe(uploadStream);
   });
+};
+
+const removeTempFile = (filePath) => {
+  if (filePath) {
+    fs.unlink(filePath, (err) => {
+      if (err && err.code !== 'ENOENT') console.error('Failed to remove temp file:', filePath, err.message);
+    });
+  }
 };
 
 // Fallback for when Cloudinary not configured - use placeholder
@@ -53,15 +68,16 @@ export const uploadSonarImages = asyncHandler(async (req, res) => {
   }
 
   const uploadedImages = [];
+  const errors = [];
   const isCloudinaryConfigured = process.env.CLOUDINARY_CLOUD_NAME && 
                                   process.env.CLOUDINARY_CLOUD_NAME !== 'your_cloudinary_cloud_name';
 
   for (const file of req.files) {
     try {
       let result;
-      
+
       if (isCloudinaryConfigured) {
-        result = await uploadToCloudinary(file.buffer, file.originalname);
+        result = await uploadToCloudinary(file.path, file.originalname);
       } else {
         // Mock for demo when cloudinary not configured
         result = mockUpload(file.originalname);
@@ -87,8 +103,17 @@ export const uploadSonarImages = asyncHandler(async (req, res) => {
       uploadedImages.push(sonarImage);
     } catch (error) {
       console.error(`Failed to upload ${file.originalname}:`, error.message);
+      errors.push({ name: file.originalname, error: error.message });
       // Continue with other files
+    } finally {
+      removeTempFile(file.path);
     }
+  }
+
+  if (uploadedImages.length === 0 && errors.length > 0) {
+    const preview = `${errors.length} of ${req.files.length} file(s) failed to upload. ${errors[0].error}`;
+    res.status(500).json(new ApiResponse(500, { errors, uploaded: 0, total: req.files.length }, preview));
+    return;
   }
 
   // Update mission totalImages
@@ -98,7 +123,8 @@ export const uploadSonarImages = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, {
     uploaded: uploadedImages.length,
     total: req.files.length,
-    images: uploadedImages
+    images: uploadedImages,
+    errors
   }, `${uploadedImages.length} images uploaded successfully`));
 });
 
@@ -107,8 +133,9 @@ export const uploadMetadataCSV = asyncHandler(async (req, res) => {
     throw new ApiError(400, 'CSV file required');
   }
 
-  const csvContent = req.file.buffer.toString('utf-8');
-  
+  const csvContent = await fs.promises.readFile(req.file.path, 'utf-8');
+  removeTempFile(req.file.path);
+
   // Basic validation
   if (!csvContent.includes('image_name')) {
     throw new ApiError(400, 'CSV must contain image_name column');

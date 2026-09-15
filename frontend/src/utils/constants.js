@@ -1,4 +1,4 @@
-export const OBJECT_TYPES = ['Ghost Net', 'Pipe', 'Cylinder', 'Shipwreck', 'Unknown Debris'];
+export const OBJECT_TYPES = ['Ghost Net', 'Pipe', 'Cylinder', 'Shipwreck', 'Unknown Debris', 'Plane', 'Human'];
 export const HAZARD_LEVELS = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
 export const VEHICLE_TYPES = ['Ship', 'AUV', 'ROV'];
 
@@ -21,7 +21,9 @@ export const OBJECT_ICONS = {
   'Pipe': '🛢️',
   'Cylinder': '🧴',
   'Shipwreck': '🚢',
-  'Unknown Debris': '❓'
+  'Unknown Debris': '❓',
+  'Plane': '✈️',
+  'Human': '🧍'
 };
 
 export const CONFIDENCE_COLORS = {

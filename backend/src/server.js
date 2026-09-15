@@ -14,8 +14,14 @@ const startServer = async () => {
       console.log(`🌊 OceanSentinel AI Server running on port ${PORT}`);
       console.log(`📡 Environment: ${process.env.NODE_ENV}`);
       console.log(`🔗 Frontend URL: ${process.env.FRONTEND_URL}`);
-      console.log(`🤖 Mock AI Detection Engine: ACTIVE`);
+      console.log(process.env.AI_SERVICE_URL
+        ? `🌐 SonarVision AI Engine: ${process.env.AI_SERVICE_URL}`
+        : '🤖 Mock AI Detection Engine: ACTIVE');
       console.log(`🗺️  Hazard Scoring Engine: ACTIVE`);
+
+      if (process.env.CLOUDINARY_API_SECRET && process.env.CLOUDINARY_API_SECRET === process.env.CLOUDINARY_API_KEY) {
+        console.warn('⚠️  CLOUDINARY_API_SECRET looks wrong: it equals CLOUDINARY_API_KEY. Uploads to Cloudinary will fail with "Invalid Signature". Update backend/.env with the real API Secret from the Cloudinary dashboard.');
+      }
     });
   } catch (error) {
     console.error('Failed to start server:', error);
@@ -25,8 +31,12 @@ const startServer = async () => {
 
 startServer();
 
-// Handle unhandled promise rejections
+// Never let a transient failure (bad cloud upload, external API hiccup) kill
+// the server. Log it and keep serving; endpoints return clean 500s instead.
 process.on('unhandledRejection', (err) => {
-  console.error(`Unhandled Rejection: ${err.message}`);
-  process.exit(1);
+  console.error('[unhandledRejection]', err?.message || err);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('[uncaughtException]', err);
 });

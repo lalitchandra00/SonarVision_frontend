@@ -14,7 +14,7 @@ const detectionSchema = new mongoose.Schema({
   },
   objectType: {
     type: String,
-    enum: ['Ghost Net', 'Pipe', 'Cylinder', 'Shipwreck', 'Unknown Debris', 'Rock', 'Sand Ripple', 'Natural Ridge'],
+    enum: ['Ghost Net', 'Pipe', 'Cylinder', 'Shipwreck', 'Unknown Debris', 'Rock', 'Sand Ripple', 'Natural Ridge', 'Plane', 'Human'],
     required: true
   },
   confidence: {

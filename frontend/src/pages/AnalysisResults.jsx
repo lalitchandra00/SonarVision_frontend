@@ -138,11 +138,13 @@ const AnalysisResults = () => {
           </div>
 
           <DetectionOverlay
-            imageUrl={currentImage?.imageUrl}
+            imageUrl={currentImage?.annotatedImageUrl || currentImage?.imageUrl}
             detections={detectionsToShow}
             showBoxes={filters.showBoxes}
             showConfidence={filters.showConfidence}
             showHazard={filters.showHazard}
+            imageWidth={currentImage?.width || data.images[0]?.width || 1024}
+            imageHeight={currentImage?.height || data.images[0]?.height || 768}
           />
 
           {data.images.length > 1 && (
