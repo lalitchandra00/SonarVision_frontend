@@ -113,20 +113,20 @@ const VideoUpload = () => {
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-3">
           <FaFilm className="text-cyan-400" /> Sonar Video Analysis
         </h1>
         <p className="text-sm text-white/50 mono mt-1">Upload a sonar survey video — the backend forwards it to /predict/video and stores per-frame results</p>
       </div>
 
-      <div className="flex items-center gap-2 mb-8">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-3 sm:gap-x-3 mb-8">
         {steps.map((s) => (
           <div key={s.n} className="flex items-center gap-2">
             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition ${step >= s.n ? 'bg-white text-black' : 'bg-white/10 text-white/40'}`}>
               {s.n}
             </div>
             <span className={`text-sm ${step >= s.n ? 'text-white' : 'text-white/40'}`}>{s.label}</span>
-            {s.n < 3 && <div className={`w-12 h-px mx-2 ${step > s.n ? 'bg-white' : 'bg-white/10'}`} />}
+            {s.n < 3 && <div className={`hidden sm:block w-12 h-px mx-2 ${step > s.n ? 'bg-white' : 'bg-white/10'}`} />}
           </div>
         ))}
       </div>

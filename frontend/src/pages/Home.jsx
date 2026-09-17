@@ -9,7 +9,7 @@ const Home = () => {
       <Navbar />
       
       {/* Hero */}
-      <section className="pt-[120px] pb-20 px-6 max-w-7xl mx-auto">
+      <section className="pt-24 lg:pt-[120px] pb-20 px-6 max-w-7xl mx-auto">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -21,7 +21,7 @@ const Home = () => {
               AI-Powered Marine Intelligence Platform
             </div>
             
-            <h1 className="text-[48px] lg:text-[64px] font-bold leading-[0.9] tracking-tight">
+            <h1 className="text-[36px] sm:text-[48px] lg:text-[64px] font-bold leading-[0.9] tracking-tight">
               AI-Powered Intelligence for a{' '}
               <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
                 Cleaner Ocean

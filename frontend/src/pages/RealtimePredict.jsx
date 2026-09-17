@@ -132,9 +132,9 @@ const RealtimePredict = () => {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-3 flex-wrap">
             <FaVideo className="text-cyan-400" /> Realtime Webcam Detection
           </h1>
           <p className="text-sm text-white/50 mono mt-1">
@@ -257,7 +257,7 @@ const RealtimePredict = () => {
       <div className="glass rounded-2xl p-5 space-y-3">
         <div className="flex justify-between items-center">
           <h3 className="font-semibold">Detection History</h3>
-          <div className="flex items-center gap-4 text-[11px] mono text-white/40">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] mono text-white/40">
             <span>{history.length} frames</span>
             <span className="text-cyan-300">{totalDetections} objects tracked</span>
             <button onClick={() => setHistory([])} className="px-2.5 py-1 rounded-lg border border-white/10 hover:bg-white/10 text-white/60 hover:text-white flex items-center gap-1">

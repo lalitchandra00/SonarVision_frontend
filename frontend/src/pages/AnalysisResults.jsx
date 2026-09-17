@@ -82,7 +82,7 @@ const AnalysisResults = () => {
           <h1 className="text-2xl font-bold">{data.mission.name}</h1>
           <p className="text-sm text-white/50 mono">{data.mission.locationName} • {data.images.length} images • {data.detections.length} anomalies</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button onClick={() => handleDownload('json')} className="px-4 py-2 rounded-xl glass border border-white/10 text-sm flex items-center gap-2 hover:bg-white/10">
             <FaDownload /> JSON
           </button>
@@ -95,7 +95,7 @@ const AnalysisResults = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="glass rounded-xl p-4 text-center">
           <p className="text-2xl font-bold">{data.stats.total}</p>
           <p className="text-[11px] mono uppercase text-white/40">Total Detections</p>
@@ -116,9 +116,9 @@ const AnalysisResults = () => {
 
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-4">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <h3 className="font-semibold">Sonar Visualization</h3>
-            <div className="flex gap-2 text-[11px] mono">
+            <div className="flex flex-wrap gap-2 text-[11px] mono">
               {[
                 { key: 'showBoxes', label: 'Boxes' },
                 { key: 'showConfidence', label: 'Confidence' },

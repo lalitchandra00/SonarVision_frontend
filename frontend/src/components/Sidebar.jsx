@@ -1,8 +1,8 @@
 import { NavLink } from 'react-router-dom';
-import { FaChartLine, FaUpload, FaMapMarkedAlt, FaHistory, FaExclamationTriangle, FaCog, FaUsers, FaFilm, FaFileDownload, FaVideo } from 'react-icons/fa';
+import { FaTimes, FaChartLine, FaUpload, FaMapMarkedAlt, FaHistory, FaExclamationTriangle, FaCog, FaUsers, FaFilm, FaFileDownload, FaVideo } from 'react-icons/fa';
 import useAuth from '../hooks/useAuth';
 
-const Sidebar = () => {
+const Sidebar = ({ open = false, onClose = () => {} }) => {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
 
@@ -28,21 +28,37 @@ const Sidebar = () => {
   const links = isAdmin ? adminLinks : researcherLinks;
 
   return (
-    <aside className="w-[280px] shrink-0 glass border-r border-white/5 h-[calc(100vh-64px)] sticky top-[64px] p-4 flex flex-col">
+    <aside
+      className={`fixed lg:sticky top-[64px] bottom-0 lg:bottom-auto left-0 z-40 w-[280px] shrink-0 glass border-r border-white/5 lg:h-[calc(100vh-64px)] p-4 flex flex-col transition-transform duration-300 transform ${
+        open ? 'translate-x-0' : '-translate-x-full'
+      } lg:translate-x-0 lg:max-h-none`}
+    >
+      <div className="flex items-center justify-between mb-4 lg:hidden">
+        <p className="text-xs mono tracking-widest text-cyan-400/70 uppercase">Navigation</p>
+        <button
+          onClick={onClose}
+          className="p-2 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition"
+          aria-label="Close menu"
+        >
+          <FaTimes />
+        </button>
+      </div>
+
       <div className="mb-6 px-3 py-3 rounded-xl bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border border-cyan-500/10">
         <p className="text-[11px] mono tracking-widest text-cyan-400/70 uppercase">Active Profile</p>
-        <p className="font-semibold mt-1">{user?.name}</p>
-        <p className="text-xs text-white/50">{user?.organization}</p>
+        <p className="font-semibold mt-1 truncate">{user?.name}</p>
+        <p className="text-xs text-white/50 truncate">{user?.organization}</p>
         <div className="mt-2 inline-flex px-2 py-0.5 rounded-full bg-cyan-500/20 border border-cyan-500/30 text-[10px] mono text-cyan-400 uppercase">
           {user?.role}
         </div>
       </div>
 
-      <nav className="space-y-1 flex-1">
+      <nav className="space-y-1 flex-1 overflow-y-auto custom-scrollbar">
         {links.map(link => (
           <NavLink
             key={link.to}
             to={link.to}
+            onClick={onClose}
             className={({ isActive }) => 
               `flex items-center gap-3 px-3 py-3 rounded-xl transition group ${
                 isActive 
@@ -53,8 +69,8 @@ const Sidebar = () => {
           >
             <link.icon className="text-[18px] shrink-0" />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium leading-none">{link.label}</p>
-              <p className="text-[11px] opacity-60 mt-1">{link.desc}</p>
+              <p className="text-sm font-medium leading-none truncate">{link.label}</p>
+              <p className="text-[11px] opacity-60 mt-1 truncate">{link.desc}</p>
             </div>
           </NavLink>
         ))}
