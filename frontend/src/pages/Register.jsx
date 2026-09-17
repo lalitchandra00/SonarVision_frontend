@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
 import useAuth from '../hooks/useAuth';
@@ -8,8 +8,12 @@ import { FaWater } from 'react-icons/fa';
 const Register = () => {
   const [form, setForm] = useState({ name: '', email: '', password: '', organization: '', role: 'researcher' });
   const [loading, setLoading] = useState(false);
-  const { register } = useAuth();
+  const { register, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
+
+  if (isAuthenticated) {
+    return <Navigate to={user?.role === 'admin' ? '/admin' : '/dashboard'} replace />;
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();

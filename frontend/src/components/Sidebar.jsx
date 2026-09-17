@@ -8,7 +8,7 @@ const Sidebar = ({ open = false, onClose = () => {} }) => {
 
   const researcherLinks = [
     { to: '/dashboard', icon: FaChartLine, label: 'Dashboard', desc: 'Analytics Overview' },
-    { to: '/upload', icon: FaUpload, label: 'Sonar Image', desc: 'Analyze Sonar Images' },
+    { to: '/upload', icon: FaUpload, label: 'Sonar Image', desc: 'Analyze Sonar Images', end: true },
     { to: '/upload/video', icon: FaFilm, label: 'Sonar Video', desc: 'Analyze Survey Video' },
     { to: '/upload/log', icon: FaFileDownload, label: 'Side-Scan Log', desc: 'Analyze .xtf/.jsf Logs' },
     { to: '/realtime', icon: FaVideo, label: 'Realtime', desc: 'Live Webcam Detection' },
@@ -18,7 +18,7 @@ const Sidebar = ({ open = false, onClose = () => {} }) => {
   ];
 
   const adminLinks = [
-    { to: '/admin', icon: FaChartLine, label: 'Admin Dashboard', desc: 'Global Analytics' },
+    { to: '/admin', icon: FaChartLine, label: 'Admin Dashboard', desc: 'Global Analytics', end: true },
     { to: '/dashboard', icon: FaChartLine, label: 'Research View', desc: 'Switch Role' },
     { to: '/missions', icon: FaHistory, label: 'All Missions', desc: 'Platform Wide' },
     { to: '/map', icon: FaMapMarkedAlt, label: 'Global Map', desc: 'All Anomalies' },
@@ -58,6 +58,7 @@ const Sidebar = ({ open = false, onClose = () => {} }) => {
           <NavLink
             key={link.to}
             to={link.to}
+            end={link.end}
             onClick={onClose}
             className={({ isActive }) => 
               `flex items-center gap-3 px-3 py-3 rounded-xl transition group ${

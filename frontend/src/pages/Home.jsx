@@ -2,8 +2,11 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FaWater, FaBrain, FaMapMarkedAlt, FaExclamationTriangle, FaChartLine, FaShieldAlt, FaSatelliteDish, FaFileDownload } from 'react-icons/fa';
 import Navbar from '../components/Navbar';
+import useAuth from '../hooks/useAuth';
 
 const Home = () => {
+  const { user, isAuthenticated } = useAuth();
+
   return (
     <div className="min-h-screen ocean-gradient">
       <Navbar />
@@ -32,13 +35,26 @@ const Home = () => {
               OceanSentinel AI analyzes Side-Scan Sonar imagery to automatically detect marine debris, ghost nets, underwater hazards, and artificial anomalies.
             </p>
             
-            <div className="flex gap-4 mt-8">
-              <Link to="/register" className="px-6 py-3 rounded-xl bg-white text-black font-medium hover:bg-white/90 transition">
-                Start Analysis
-              </Link>
-              <Link to="/login" className="px-6 py-3 rounded-xl glass hover:bg-white/10 font-medium transition">
-                Explore Platform
-              </Link>
+            <div className="flex flex-wrap gap-4 mt-8">
+              {isAuthenticated ? (
+                <>
+                  <Link to="/upload" className="px-6 py-3 rounded-xl bg-white text-black font-medium hover:bg-white/90 transition">
+                    Start Analysis
+                  </Link>
+                  <Link to={user?.role === 'admin' ? '/admin' : '/dashboard'} className="px-6 py-3 rounded-xl glass hover:bg-white/10 font-medium transition">
+                    Go to Dashboard
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link to="/register" className="px-6 py-3 rounded-xl bg-white text-black font-medium hover:bg-white/90 transition">
+                    Start Analysis
+                  </Link>
+                  <Link to="/login" className="px-6 py-3 rounded-xl glass hover:bg-white/10 font-medium transition">
+                    Explore Platform
+                  </Link>
+                </>
+              )}
             </div>
 
             <div className="grid grid-cols-3 gap-6 mt-12 pt-8 border-t border-white/5">
