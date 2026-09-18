@@ -12,7 +12,6 @@ const RealtimePredict = () => {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const sessionRef = useRef(0); // bumped on stop/start to discard stale responses
-  const timerRef = useRef(null);
   const inFlightRef = useRef(false); // 1 request at a time – the AI engine can't keep up otherwise
   const seqRef = useRef(0);          // monotonic id for history entries
 
@@ -35,8 +34,6 @@ const RealtimePredict = () => {
 
   const stopCamera = useCallback(() => {
     sessionRef.current += 1;
-    if (timerRef.current) clearInterval(timerRef.current);
-    timerRef.current = null;
     streamRef.current?.getTracks()?.forEach((t) => t.stop());
     streamRef.current = null;
     setRunning(false);
@@ -55,18 +52,22 @@ const RealtimePredict = () => {
 
   useEffect(() => () => stopCamera(), [stopCamera]);
 
-  // Drone-proxy cadence: the slider (1-10s) sets how often frames are sent,
-  // standing in for the sonar drone's real input rate. Interval is rebuilt
-  // whenever the camera runs or the duration changes.
+  // Drone-proxy cadence: the slider (1-10s) sets how often frames are sent.
+  // Uses an async loop instead of setInterval so exactly one frame goes out
+  // per tick — a prediction that outlives the interval no longer silently
+  // skips the next frame like the old skip-if-busy logic did.
   useEffect(() => {
     if (!running) return;
-    timerRef.current = setInterval(() => {
-      if (inFlightRef.current) return;
-      sendFrame();
-    }, frameDurationSec * 1000);
+    let cancelled = false;
+    const loop = async () => {
+      while (!cancelled) {
+        await sendFrame();
+        await new Promise((r) => setTimeout(r, frameDurationSec * 1000));
+      }
+    };
+    loop();
     return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-      timerRef.current = null;
+      cancelled = true;
     };
   }, [running, frameDurationSec]);
 
@@ -81,19 +82,15 @@ const RealtimePredict = () => {
       videoRef.current.srcObject = stream;
       await videoRef.current.play();
       setRunning(true);
-      setTimeout(() => {
-        if (!inFlightRef.current) sendFrame();
-      }, 400);
     } catch (err) {
       setCameraError('Camera access denied. Allow camera permission and retry.');
     }
   };
 
   // Snap a frame from the webcam into its own offscreen canvas and send it.
-  // Frames flow continuously, but only one request is in flight at a time:
-  // the interval skips ticks while a prediction is pending, so slow inferences
-  // never stack up into concurrent requests that time out. The result is then
-  // recorded against the mission so it lands in Mission History.
+  // Frames flow continuously, one at a time, at the slider cadence. Every
+  // frame that actually gets posted to the API bumps the frame counter (no
+  // object-detection counting — just sent images).
   const sendFrame = async () => {
     const video = videoRef.current;
     if (!video || video.readyState < 2) return;
@@ -107,12 +104,14 @@ const RealtimePredict = () => {
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
     const t0 = performance.now();
-    setCaptures((c) => c + 1);
     setInflight((n) => n + 1);
 
     try {
       const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.9));
       if (!blob) return;
+
+      // Only count the frame once it's actually being sent to the API.
+      setCaptures((c) => c + 1);
 
       const fd = new FormData();
       fd.append('file', blob, `frame_${Date.now()}.jpg`);
@@ -293,7 +292,7 @@ const RealtimePredict = () => {
               <div className="grid grid-cols-4 gap-2 text-center">
                 <div className="p-2 rounded-lg bg-white/5 border border-cyan-500/30">
                   <p className="text-lg font-bold text-cyan-300">{captures}</p>
-                  <p className="text-[10px] mono uppercase text-white/40">Images</p>
+                  <p className="text-[10px] mono uppercase text-white/40">Frames Sent</p>
                 </div>
                 <div className="p-2 rounded-lg bg-white/5 border border-white/10">
                   <p className="text-lg font-bold">{current.detections?.length ?? 0}</p>
@@ -328,26 +327,35 @@ const RealtimePredict = () => {
       {/* Detection history */}
       <div className="glass rounded-2xl p-5 space-y-3">
         <div className="flex justify-between items-center">
-          <h3 className="font-semibold">Detection History</h3>
+          <h3 className="font-semibold">Sent Frames Table</h3>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] mono text-white/40">
-            <span>{history.length} frames</span>
-            <span className="text-cyan-300">{totalDetections} objects tracked</span>
+            <span className="text-cyan-300 font-bold text-xs">{captures} frames sent</span>
+            <span>{totalDetections} objects detected</span>
             <button onClick={() => setHistory([])} className="px-2.5 py-1 rounded-lg border border-white/10 hover:bg-white/10 text-white/60 hover:text-white flex items-center gap-1">
               <FaRedo className="text-[10px]" /> Reset
             </button>
           </div>
         </div>
 
-        {history.length === 0 && <p className="text-sm text-white/50">No frames logged yet.</p>}
+        {history.length === 0 && <p className="text-sm text-white/50">No frames sent yet.</p>}
 
         <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
           {history.map((h) => (
             <div key={h.id} className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/10">
-              <div className="flex-1 min-w-0">
-                <p className="text-xs mono text-white/60">{h.time}{h.elapsed != null && ` • ${h.elapsed.toFixed(0)}ms`}</p>
+              <div className="flex items-center gap-3 shrink-0">
+                <span className="w-7 h-7 rounded-lg bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 text-xs mono flex items-center justify-center font-bold">
+                  {h.id}
+                </span>
+                <div>
+                  <p className="text-xs mono text-white/60">{h.time}{h.elapsed != null && ` • ${h.elapsed.toFixed(0)}ms`}</p>
+                </div>
+              </div>
+              <div className="flex-1 min-w-0 px-3">
                 <p className="text-sm">
                   {h.error ? <span className="text-red-400">{h.error}</span> : (
-                    (h.detections || []).length === 0 ? 'No objects detected' : (
+                    (h.detections || []).length === 0 ? (
+                      <span className="text-white/40">No objects detected</span>
+                    ) : (
                       <span className="flex flex-wrap gap-1.5 mt-1">
                         {(h.detections || []).map((d, i) => (
                           <span key={i} className="inline-flex items-center gap-2 px-2 py-0.5 rounded-lg bg-white/5 border border-white/10">
