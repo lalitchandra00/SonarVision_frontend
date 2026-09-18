@@ -20,6 +20,8 @@ const UploadMission = () => {
   });
   const [missionId, setMissionId] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [pipelineStage, setPipelineStage] = useState(0);
   const navigate = useNavigate();
 
@@ -58,18 +60,26 @@ const UploadMission = () => {
       toast.error('Select at least one sonar image');
       return;
     }
+    setUploading(true);
     try {
       const fd = new FormData();
       fd.append('missionId', missionId);
       files.forEach(f => fd.append('sonarImages', f));
       
       await api.post('/upload/sonar', fd, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (e) => {
+          const pct = e.total ? Math.round((e.loaded / e.total) * 100) : 0;
+          setUploadProgress(pct);
+        }
       });
       toast.success(`${files.length} images uploaded`);
+      setUploadProgress(100);
       setStep(3);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Upload failed');
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -241,12 +251,37 @@ const UploadMission = () => {
         <div className="glass rounded-2xl p-6 space-y-6">
           <h3 className="font-semibold">Upload Sonar Imagery</h3>
           <SonarUploader files={files} setFiles={setFiles} />
+          {uploading && (
+            <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-4 space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-5 h-5 border-2 border-cyan-400/30 border-t-cyan-400 rounded-full animate-spin shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-cyan-300">Uploading {files.length} image{files.length > 1 ? 's' : ''}…</p>
+                  <p className="text-[11px] mono text-white/50">Buffering sonar data to secure storage</p>
+                </div>
+              </div>
+              <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-cyan-400 to-blue-500 transition-all duration-300"
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              </div>
+              <p className="text-[10px] mono text-white/40 text-right">{uploadProgress}%</p>
+            </div>
+          )}
           <div className="flex gap-3">
-            <button onClick={() => setStep(1)} className="px-5 py-2.5 rounded-xl glass border border-white/10 text-sm hover:bg-white/10">
+            <button onClick={() => setStep(1)} disabled={uploading} className="px-5 py-2.5 rounded-xl glass border border-white/10 text-sm hover:bg-white/10 disabled:opacity-50">
               Back
             </button>
-            <button onClick={handleUpload} className="flex-1 py-2.5 rounded-xl bg-white text-black text-sm font-medium hover:bg-white/90 flex items-center justify-center gap-2">
-              <FaRocket /> Upload & Continue
+            <button onClick={handleUpload} disabled={uploading} className="flex-1 py-2.5 rounded-xl bg-white text-black text-sm font-medium hover:bg-white/90 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+              {uploading ? (
+                <>
+                  <span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                  Uploading…
+                </>
+              ) : (
+                <><FaRocket /> Upload & Continue</>
+              )}
             </button>
           </div>
         </div>

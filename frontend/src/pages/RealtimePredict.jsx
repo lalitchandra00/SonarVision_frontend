@@ -223,7 +223,7 @@ const RealtimePredict = () => {
               Live Feed
             </h3>
             <div className="text-[11px] mono text-white/40">
-              {captures} sent{inflight > 0 && <span className="text-cyan-300"> • {inflight} in flight</span>}
+              <span className="text-cyan-300 font-bold text-xs">{captures} images</span>{inflight > 0 && <span> • {inflight} in flight</span>}
               {throughput && ` • ${throughput} fps`}
             </div>
           </div>
@@ -290,7 +290,11 @@ const RealtimePredict = () => {
                 imageWidth={current.width || 1024}
                 imageHeight={current.height || 768}
               />
-              <div className="grid grid-cols-3 gap-2 text-center">
+              <div className="grid grid-cols-4 gap-2 text-center">
+                <div className="p-2 rounded-lg bg-white/5 border border-cyan-500/30">
+                  <p className="text-lg font-bold text-cyan-300">{captures}</p>
+                  <p className="text-[10px] mono uppercase text-white/40">Images</p>
+                </div>
                 <div className="p-2 rounded-lg bg-white/5 border border-white/10">
                   <p className="text-lg font-bold">{current.detections?.length ?? 0}</p>
                   <p className="text-[10px] mono uppercase text-white/40">Objects</p>
