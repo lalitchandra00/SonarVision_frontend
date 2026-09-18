@@ -5,8 +5,6 @@ import api from '../services/api';
 import DetectionOverlay from '../components/DetectionOverlay';
 import HazardBadge from '../components/HazardBadge';
 
-const FRAME_INTERVAL_MS = 1500;
-
 const RealtimePredict = () => {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
@@ -22,6 +20,7 @@ const RealtimePredict = () => {
   const [captures, setCaptures] = useState(0);
   const [inflight, setInflight] = useState(0);
   const [lastElapsedMs, setLastElapsedMs] = useState(null);
+  const [frameDurationSec, setFrameDurationSec] = useState(5);
 
   const stopCamera = useCallback(() => {
     sessionRef.current += 1;
@@ -35,6 +34,21 @@ const RealtimePredict = () => {
 
   useEffect(() => () => stopCamera(), [stopCamera]);
 
+  // Drone-proxy cadence: the slider (3-10s) sets how often frames are sent,
+  // standing in for the sonar drone's real input rate. Interval is rebuilt
+  // whenever the camera runs or the duration changes.
+  useEffect(() => {
+    if (!running) return;
+    timerRef.current = setInterval(() => {
+      if (inFlightRef.current) return;
+      sendFrame();
+    }, frameDurationSec * 1000);
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      timerRef.current = null;
+    };
+  }, [running, frameDurationSec]);
+
   const startCamera = async () => {
     sessionRef.current += 1;
     setCameraError(null);
@@ -46,14 +60,6 @@ const RealtimePredict = () => {
       videoRef.current.srcObject = stream;
       await videoRef.current.play();
       setRunning(true);
-
-      timerRef.current = setInterval(() => {
-        // Only one request in flight at a time: the free detection engine
-        // processes ~1 frame at a time, so overlapping requests pile up and
-        // time out. Skip a tick instead of stacking another request.
-        if (inFlightRef.current) return;
-        sendFrame();
-      }, FRAME_INTERVAL_MS);
       setTimeout(() => {
         if (!inFlightRef.current) sendFrame();
       }, 400);
@@ -137,8 +143,8 @@ const RealtimePredict = () => {
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-3 flex-wrap">
             <FaVideo className="text-cyan-400" /> Realtime Webcam Detection
           </h1>
-          <p className="text-sm text-white/50 mono mt-1">
-            Sends frames continuously — but only 1 request in flight at a time, so slow inferences never stack up
+          <p className="text-sm mono mt-1 font-bold">
+            Proxy for sonar drone realtime input
           </p>
         </div>
         <button
@@ -197,13 +203,25 @@ const RealtimePredict = () => {
             )}
           </div>
 
-          {running && (
-            <div className="flex gap-3">
-              <button onClick={sendFrame} className="flex-1 py-2.5 rounded-xl border border-cyan-500/30 text-cyan-300 text-sm font-medium hover:bg-cyan-500/10 transition">
-                Send Frame Now
-              </button>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label htmlFor="frame-duration" className="text-[11px] mono uppercase text-white/50">
+                Send Frame Duration
+              </label>
+              <span className="text-xs mono text-cyan-300">{frameDurationSec}s</span>
             </div>
-          )}
+            <input
+              id="frame-duration"
+              type="range"
+              min={3}
+              max={10}
+              step={1}
+              value={frameDurationSec}
+              onChange={(e) => setFrameDurationSec(Number(e.target.value))}
+              className="w-full accent-cyan-400"
+            />
+            <p className="text-[11px] text-white/40">Proxy for sonar drone input</p>
+          </div>
         </div>
 
         {/* Latest result */}
