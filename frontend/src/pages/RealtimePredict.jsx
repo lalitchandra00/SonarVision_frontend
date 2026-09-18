@@ -25,7 +25,7 @@ const RealtimePredict = () => {
   const [captures, setCaptures] = useState(0);
   const [inflight, setInflight] = useState(0);
   const [lastElapsedMs, setLastElapsedMs] = useState(null);
-  const [frameDurationSec, setFrameDurationSec] = useState(5);
+  const [frameDurationSec, setFrameDurationSec] = useState(1);
 
   useEffect(() => {
     api.get(`/missions/${missionId}`)
@@ -55,7 +55,7 @@ const RealtimePredict = () => {
 
   useEffect(() => () => stopCamera(), [stopCamera]);
 
-  // Drone-proxy cadence: the slider (3-10s) sets how often frames are sent,
+  // Drone-proxy cadence: the slider (1-10s) sets how often frames are sent,
   // standing in for the sonar drone's real input rate. Interval is rebuilt
   // whenever the camera runs or the duration changes.
   useEffect(() => {
@@ -263,7 +263,7 @@ const RealtimePredict = () => {
             <input
               id="frame-duration"
               type="range"
-              min={3}
+              min={1}
               max={10}
               step={1}
               value={frameDurationSec}
