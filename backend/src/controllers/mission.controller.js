@@ -1,12 +1,13 @@
 import Mission from '../models/Mission.js';
 import SonarImage from '../models/SonarImage.js';
 import Detection from '../models/Detection.js';
+import RealtimeFrame from '../models/RealtimeFrame.js';
 import ApiError from '../utils/ApiError.js';
 import ApiResponse from '../utils/ApiResponse.js';
 import asyncHandler from '../utils/asyncHandler.js';
 
 export const createMission = asyncHandler(async (req, res) => {
-  const { name, locationName, latitude, longitude, depth, date, vehicleType } = req.body;
+  const { name, locationName, latitude, longitude, depth, date, vehicleType, sourceType = 'sonar' } = req.body;
 
   if (!name || !locationName || !latitude || !longitude || !depth || !date || !vehicleType) {
     throw new ApiError(400, 'All mission fields are required');
@@ -20,6 +21,7 @@ export const createMission = asyncHandler(async (req, res) => {
     depth: parseFloat(depth),
     date: new Date(date),
     vehicleType,
+    sourceType,
     uploadedBy: req.user._id,
     status: 'uploaded'
   });
@@ -80,18 +82,21 @@ export const getMissionById = asyncHandler(async (req, res) => {
     throw new ApiError(403, 'Not authorized to access this mission');
   }
 
-  const [images, detections] = await Promise.all([
+  const [images, detections, frames] = await Promise.all([
     SonarImage.find({ mission: mission._id }),
-    Detection.find({ mission: mission._id }).sort({ hazardScore: -1 })
+    Detection.find({ mission: mission._id }).sort({ hazardScore: -1 }),
+    RealtimeFrame.find({ mission: mission._id }).sort({ timestamp: -1 })
   ]);
 
   res.status(200).json(new ApiResponse(200, {
     mission,
     images,
     detections,
+    frames,
     stats: {
       totalImages: images.length,
-      totalDetections: detections.length,
+      totalFrames: frames.length,
+      totalDetections: detections.length + frames.reduce((s, f) => s + (f.detections?.length || 0), 0),
       critical: detections.filter(d => d.hazardLevel === 'CRITICAL').length,
       high: detections.filter(d => d.hazardLevel === 'HIGH').length
     }
@@ -112,6 +117,7 @@ export const deleteMission = asyncHandler(async (req, res) => {
   await Promise.all([
     SonarImage.deleteMany({ mission: mission._id }),
     Detection.deleteMany({ mission: mission._id }),
+    RealtimeFrame.deleteMany({ mission: mission._id }),
     Mission.findByIdAndDelete(mission._id)
   ]);
 

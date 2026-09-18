@@ -47,6 +47,15 @@ const missionSchema = new mongoose.Schema({
     enum: ['uploaded', 'processing', 'completed', 'failed'],
     default: 'uploaded'
   },
+  sourceType: {
+    type: String,
+    enum: ['sonar', 'video', 'log', 'realtime'],
+    default: 'sonar'
+  },
+  realtimeFrames: {
+    type: Number,
+    default: 0
+  },
   totalImages: {
     type: Number,
     default: 0
