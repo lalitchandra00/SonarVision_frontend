@@ -1,11 +1,14 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { FaVideo, FaStop, FaCamera, FaRedo } from 'react-icons/fa';
+import { FaVideo, FaStop, FaCamera, FaRedo, FaCheckCircle } from 'react-icons/fa';
 import api from '../services/api';
 import DetectionOverlay from '../components/DetectionOverlay';
 import HazardBadge from '../components/HazardBadge';
 
 const RealtimePredict = () => {
+  const { missionId } = useParams();
+  const navigate = useNavigate();
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const sessionRef = useRef(0); // bumped on stop/start to discard stale responses
@@ -13,6 +16,8 @@ const RealtimePredict = () => {
   const inFlightRef = useRef(false); // 1 request at a time – the AI engine can't keep up otherwise
   const seqRef = useRef(0);          // monotonic id for history entries
 
+  const [mission, setMission] = useState(null);
+  const [ending, setEnding] = useState(false);
   const [running, setRunning] = useState(false);
   const [cameraError, setCameraError] = useState(null);
   const [current, setCurrent] = useState(null);
@@ -21,6 +26,12 @@ const RealtimePredict = () => {
   const [inflight, setInflight] = useState(0);
   const [lastElapsedMs, setLastElapsedMs] = useState(null);
   const [frameDurationSec, setFrameDurationSec] = useState(5);
+
+  useEffect(() => {
+    api.get(`/missions/${missionId}`)
+      .then((res) => setMission(res.data.data.mission))
+      .catch(() => toast.error('Failed to load mission'));
+  }, [missionId]);
 
   const stopCamera = useCallback(() => {
     sessionRef.current += 1;
@@ -31,6 +42,16 @@ const RealtimePredict = () => {
     setRunning(false);
     setInflight(0);
   }, []);
+
+  const endSession = async () => {
+    try {
+      await api.post(`/realtime/${missionId}/end`);
+      toast.success('Mission completed & saved to history');
+      navigate(`/analysis/${missionId}`);
+    } catch (err) {
+      toast.error('Failed to complete mission');
+    }
+  };
 
   useEffect(() => () => stopCamera(), [stopCamera]);
 
@@ -71,7 +92,8 @@ const RealtimePredict = () => {
   // Snap a frame from the webcam into its own offscreen canvas and send it.
   // Frames flow continuously, but only one request is in flight at a time:
   // the interval skips ticks while a prediction is pending, so slow inferences
-  // never stack up into concurrent requests that time out.
+  // never stack up into concurrent requests that time out. The result is then
+  // recorded against the mission so it lands in Mission History.
   const sendFrame = async () => {
     const video = videoRef.current;
     if (!video || video.readyState < 2) return;
@@ -114,6 +136,24 @@ const RealtimePredict = () => {
         },
         ...h
       ].slice(0, 80));
+
+      // Persist the frame against the mission (best-effort, won't break the stream).
+      try {
+        await api.post(`/realtime/${missionId}/record`, {
+          annotatedImageUrl: data.annotatedImageUrl,
+          width: data.width,
+          height: data.height,
+          elapsedMs: data.elapsedMs ?? elapsed,
+          detections: (data.detections || []).map((d) => ({
+            objectType: d.objectType,
+            confidence: d.confidence,
+            class_id: d.class_id ?? d.classId,
+            boundingBox: d.bbox || d.boundingBox,
+          })),
+        });
+      } catch (recordErr) {
+        console.warn('Failed to record frame:', recordErr.message);
+      }
     } catch (err) {
       if (session !== sessionRef.current) return;
       setHistory((h) => [
@@ -136,6 +176,13 @@ const RealtimePredict = () => {
   const totalDetections = history.reduce((s, h) => s + (h.detections?.length || 0), 0);
   const throughput = lastElapsedMs != null && lastElapsedMs > 0 ? (1000 / lastElapsedMs).toFixed(1) : null;
 
+  const handleStop = async () => {
+    stopCamera();
+    setEnding(true);
+    await endSession();
+    setEnding(false);
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -144,16 +191,19 @@ const RealtimePredict = () => {
             <FaVideo className="text-cyan-400" /> Realtime Webcam Detection
           </h1>
           <p className="text-sm mono mt-1 font-bold">
-            Proxy for sonar drone realtime input
+            {mission
+              ? <>{mission.name} • {mission.locationName}</>
+              : 'Proxy for sonar drone realtime input'}
           </p>
         </div>
         <button
-          onClick={running ? stopCamera : startCamera}
+          onClick={running ? handleStop : startCamera}
+          disabled={ending}
           className={`px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 transition ${
             running ? 'bg-red-500/15 border border-red-500/40 text-red-400 hover:bg-red-500/25' : 'bg-white text-black hover:bg-white/90'
-          }`}
+          } disabled:opacity-50`}
         >
-          {running ? <><FaStop /> Stop Stream</> : <><FaCamera /> Start Webcam</>}
+          {ending ? <><FaCheckCircle /> Saving…</> : running ? <><FaStop /> Stop & Save</> : <><FaCamera /> Start Webcam</>}
         </button>
       </div>
 
@@ -220,7 +270,7 @@ const RealtimePredict = () => {
               onChange={(e) => setFrameDurationSec(Number(e.target.value))}
               className="w-full accent-cyan-400"
             />
-            <p className="text-[11px] text-white/40">Proxy for sonar drone input</p>
+            <p className="text-[11px] font-bold text-white/40">Proxy for sonar drone input</p>
           </div>
         </div>
 
@@ -316,6 +366,21 @@ const RealtimePredict = () => {
           ))}
         </div>
       </div>
+
+      {mission && (
+        <div className="flex justify-center pb-2">
+          <button
+            onClick={handleStop}
+            disabled={ending}
+            className="px-6 py-3 rounded-xl bg-white text-black font-medium hover:bg-white/90 disabled:opacity-50 flex items-center gap-2 transition"
+          >
+            {ending ? <><FaCheckCircle /> Saving mission…</> : <><FaStop /> Stop & Save to History</>}
+          </button>
+          <Link to="/missions" className="ml-3 px-6 py-3 rounded-xl glass border border-white/10 text-sm hover:bg-white/10 text-white/60 hover:text-white transition">
+            View Mission History
+          </Link>
+        </div>
+      )}
     </div>
   );
 };

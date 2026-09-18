@@ -15,6 +15,7 @@ import UploadMission from './pages/UploadMission';
 import VideoUpload from './pages/VideoUpload';
 import LogUpload from './pages/LogUpload';
 import RealtimePredict from './pages/RealtimePredict';
+import RealtimeSetup from './pages/RealtimeSetup';
 import AnalysisResults from './pages/AnalysisResults';
 import MissionHistory from './pages/MissionHistory';
 import MapView from './pages/MapView';
@@ -38,7 +39,8 @@ function App() {
             <Route path="/upload" element={<UploadMission />} />
             <Route path="/upload/video" element={<VideoUpload />} />
             <Route path="/upload/log" element={<LogUpload />} />
-            <Route path="/realtime" element={<RealtimePredict />} />
+            <Route path="/realtime" element={<RealtimeSetup />} />
+            <Route path="/realtime/:missionId" element={<RealtimePredict />} />
             <Route path="/analysis/:missionId" element={<AnalysisResults />} />
             <Route path="/missions" element={<MissionHistory />} />
             <Route path="/map" element={<MapView />} />

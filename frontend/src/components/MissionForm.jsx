@@ -3,7 +3,7 @@ import { FaMapMarkerAlt } from 'react-icons/fa';
 import api from '../services/api';
 import { toast } from 'react-toastify';
 
-const MissionForm = ({ onCreated }) => {
+const MissionForm = ({ onCreated, sourceType = 'sonar', submitLabel = 'Create Mission & Continue' }) => {
   const [form, setForm] = useState({
     name: '',
     locationName: '',
@@ -21,6 +21,7 @@ const MissionForm = ({ onCreated }) => {
     try {
       const res = await api.post('/missions', {
         ...form,
+        sourceType,
         latitude: parseFloat(form.latitude),
         longitude: parseFloat(form.longitude),
         depth: parseFloat(form.depth)
@@ -127,7 +128,7 @@ const MissionForm = ({ onCreated }) => {
       </div>
 
       <button type="submit" disabled={submitting} className="w-full py-3 rounded-xl bg-white text-black font-medium hover:bg-white/90 transition disabled:opacity-50">
-        {submitting ? 'Creating Mission…' : 'Create Mission & Continue'}
+        {submitting ? 'Creating Mission…' : submitLabel}
       </button>
     </form>
   );

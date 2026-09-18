@@ -11,7 +11,7 @@ const Sidebar = ({ open = false, onClose = () => {} }) => {
     { to: '/upload', icon: FaUpload, label: 'Sonar Image', desc: 'Analyze Sonar Images', end: true },
     { to: '/upload/video', icon: FaFilm, label: 'Sonar Video', desc: 'Analyze Survey Video' },
     { to: '/upload/log', icon: FaFileDownload, label: 'Side-Scan Log', desc: 'Analyze .xtf/.jsf Logs' },
-    { to: '/realtime', icon: FaVideo, label: 'Realtime', desc: 'Live Webcam Detection' },
+    { to: '/realtime', icon: FaVideo, label: 'Realtime', desc: 'Live Stream + Record' },
     { to: '/missions', icon: FaHistory, label: 'Mission History', desc: 'All Surveys' },
     { to: '/map', icon: FaMapMarkedAlt, label: 'Marine Map', desc: 'Geospatial View' },
     { to: '/anomalies', icon: FaExclamationTriangle, label: 'Anomalies', desc: 'High-Risk Detections' },

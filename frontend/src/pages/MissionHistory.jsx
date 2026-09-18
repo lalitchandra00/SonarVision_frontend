@@ -84,7 +84,7 @@ const MissionHistory = () => {
                 <th className="text-left py-4 px-5 font-normal">Mission</th>
                 <th className="text-left py-4 px-3 font-normal">Date</th>
                 <th className="text-left py-4 px-3 font-normal">Location</th>
-                <th className="text-left py-4 px-3 font-normal">Images</th>
+                <th className="text-left py-4 px-3 font-normal">Surface</th>
                 <th className="text-left py-4 px-3 font-normal">Detections</th>
                 <th className="text-left py-4 px-3 font-normal">Critical</th>
                 <th className="text-left py-4 px-3 font-normal">Status</th>
@@ -110,13 +110,20 @@ const MissionHistory = () => {
                     <td className="py-4 px-5">
                       <p className="font-medium truncate max-w-[280px]">{m.name}</p>
                       <p className="text-xs text-white/40 mono">{m.vehicleType} • {m.depth}m depth</p>
+                      {m.sourceType === 'realtime' && (
+                        <span className="mt-1 inline-flex px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 text-[10px] mono uppercase border border-cyan-500/20">
+                          ⚡ Live Stream
+                        </span>
+                      )}
                     </td>
                     <td className="py-4 px-3 mono text-white/60 text-xs">{formatDate(m.date)}</td>
                     <td className="py-4 px-3">
                       <p className="truncate max-w-[140px]">{m.locationName}</p>
                       <p className="text-[11px] mono text-white/40">{m.latitude.toFixed(2)}, {m.longitude.toFixed(2)}</p>
                     </td>
-                    <td className="py-4 px-3 mono">{m.totalImages}</td>
+                    <td className="py-4 px-3 mono">
+                      {m.sourceType === 'realtime' ? `${m.realtimeFrames || 0} frames` : `${m.totalImages} images`}
+                    </td>
                     <td className="py-4 px-3 mono">{m.totalDetections}</td>
                     <td className="py-4 px-3">
                       {m.criticalCount > 0 ? (
