@@ -59,7 +59,7 @@ const Home = () => {
 
             <div className="grid grid-cols-3 gap-6 mt-12 pt-8 border-t border-white/5">
               <div>
-                <p className="text-3xl font-bold">50,000+</p>
+                <p className="text-3xl font-bold">5,000+</p>
                 <p className="text-xs mono text-white/40 uppercase tracking-widest mt-1">Sonar Images Analyzed</p>
               </div>
               <div>
